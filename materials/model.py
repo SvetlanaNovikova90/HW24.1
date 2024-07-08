@@ -29,7 +29,6 @@ class Lesson(models.Model):
         **NULLABLE,
         on_delete=models.SET_NULL,
         verbose_name="Курс",
-
     )
     link_to_video = models.TextField(**NULLABLE, verbose_name="Ссылка на видео")
 
@@ -39,6 +38,3 @@ class Lesson(models.Model):
     class Meta:
         verbose_name = "урок"
         verbose_name_plural = "уроки"
-
-
-

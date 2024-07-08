@@ -34,7 +34,6 @@ class Payments(models.Model):
         **NULLABLE,
         on_delete=models.SET_NULL,
         verbose_name="Пользователь",
-
     )
     date_of_payment = models.DateField(auto_now_add=True, verbose_name="дата оплаты")
 
@@ -43,15 +42,16 @@ class Payments(models.Model):
         **NULLABLE,
         on_delete=models.SET_NULL,
         verbose_name="оплаченный курс",
-
     )
     paid_lesson = models.ForeignKey(
         Lesson,
         **NULLABLE,
         on_delete=models.SET_NULL,
         verbose_name="оплаченный урок",
-
     )
     payment_amount = models.IntegerField(verbose_name="сумма оплаты")
-    payment_method = models.CharField(max_length=50, verbose_name='Способ оплаты',
-                                                    choices=[('cash', 'Cash'), ('non-cash', 'Non-cash')])
+    payment_method = models.CharField(
+        max_length=50,
+        verbose_name="Способ оплаты",
+        choices=[("cash", "Cash"), ("non-cash", "Non-cash")],
+    )
