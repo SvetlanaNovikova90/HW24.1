@@ -25,5 +25,3 @@ class PaymentsListApiView(ListAPIView):
 class PaymentsCreateApiView(CreateAPIView):
     queryset = Payments.objects.all()
     serializer_class = PaymentsSerializer
-
-
