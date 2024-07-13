@@ -28,6 +28,12 @@ class CourseSerializer(ModelSerializer):
         model = Course
         fields = ("id", "name", "description", "lessons_count", "lessons_list")
 
+    def get_is_subscribed(self, course):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Subscription.objects.filter(user=request.user, course=course).exists()
+        return False
+
 
 class SubscriptionSerializer(serializers.ModelSerializer):
     """ Сериализатор Подписки """
@@ -35,3 +41,12 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
         fields = "__all__"
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        if request:
+            user = request.user
+            if user.is_staff or instance.user == user:
+                return super().to_representation(instance)
+            return {}
+        return super().to_representation(instance)

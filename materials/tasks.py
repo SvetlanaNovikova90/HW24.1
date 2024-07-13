@@ -1,17 +1,27 @@
 from celery import shared_task
-from django.conf import settings
-from django.core.mail import send_mail
 
-from materials.model import Course, Subscription
+
+
+from materials.model import Course
+from materials.services import send_mailing
 
 
 @shared_task
-def send_mail_notification(course_id):
-    course = Course.objects.get(id=course_id)
-    subscription = Subscription.objects.filter(course=course)
+def mailing_about_updates(course_id):
+    """Функция отправления сообщений об обновлении курса клиентам"""
+    course = Course.objects.get(pk=course_id)
+    subscription_list = course.subscription.all()
+    user_list = [subscription.user for subscription in subscription_list]
+    subject = 'Обновление'
+    body = f'Вышло обновление по курсу {course}'
+    send_mailing(user_list, subject, body)
 
-    subject = f"Обновление курса {course.title}!"
-    message = f"Курс {course.title} был обновлен."
 
-    email_list = subscription.values_list('user__email', flat=True)
-    send_mail(subject, message, settings.EMAIL_HOST_USER, [email_list])
+@shared_task
+def send_message_about_like(user, lesson):
+    """Функция отправки сообщения о лайке урока"""
+    address = []
+    subject = 'Урок понравился'
+    body = f'Пользователь {user} поставил лайк уроку {lesson}'
+    address.append(user)
+    send_mailing(address, subject, body)

@@ -1,4 +1,8 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+
+from django.utils import timezone
+from drf_yasg import openapi
+from materials.tasks import mailing_about_updates
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.generics import (
@@ -7,9 +11,9 @@ from rest_framework.generics import (
     UpdateAPIView,
     DestroyAPIView, get_object_or_404, CreateAPIView,
 )
+from rest_framework.views import APIView
 
 from materials.model import Course, Lesson, Subscription
-from materials.tasks import send_mail_notification
 from materials.paginators import MaterialsPagination
 from materials.permissions import IsModerator, IsOwner
 from materials.serializers import CourseSerializer, LessonSerializer, SubscriptionSerializer
@@ -24,19 +28,22 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):  # Проверка прав группы модераторов для курсов (нельзя создавать и удалять курс).
         if self.action in ("create",):
-            self.permission_classes = ~IsModerator
+            self.permission_classes = [~IsModerator]
         elif self.action in ("update",):
-            self.permission_classes = IsModerator | IsOwner
+            self.permission_classes = [IsModerator | IsOwner]
         elif self.action == "destroy":
-            self.permission_classes = ~IsModerator | IsOwner
+            self.permission_classes = [~IsModerator | IsOwner]
         return super().get_permissions()
 
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        new_course = serializer.save()
+        new_course.owner = self.request.user
+        new_course.save()
 
     def perform_update(self, serializer):
-        instance = serializer.save()
-        send_mail_notification.delay(course_id=instance.id)
+        course = serializer.save()
+        mailing_about_updates.delay(course.pk)
+
 
 
 class LessonListApiView(ListAPIView):
@@ -48,19 +55,19 @@ class LessonListApiView(ListAPIView):
 class LessonRetrieveApiView(RetrieveAPIView):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
-    permission_classes = [IsOwner, IsModerator]
+    # permission_classes = [IsOwner, IsModerator]
 
 
 class LessonUpdateApiView(UpdateAPIView):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
-    permission_classes = [IsOwner, IsModerator]
+    # permission_classes = [IsOwner, IsModerator]
 
 
 class LessonDestroyApiView(DestroyAPIView):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
-    permission_classes = [IsOwner, ~IsModerator]
+    # permission_classes = [IsOwner, ~IsModerator]
 
 
 class LessonCreateApiView(CreateAPIView):
@@ -71,22 +78,41 @@ class LessonCreateApiView(CreateAPIView):
     permission_classes = [~IsModerator, IsAuthenticated]
 
 
-class SubscriptionViewSet(viewsets.ModelViewSet):
-    """ Subscription view set """
+post_request_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    required=['course_id'],
+    properties={
+        'course_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID of the course')
+    }
+)
 
-    queryset = Subscription.objects.all()
-    serializer_class = SubscriptionSerializer
+post_response_schema = openapi.Response(
+    description='Subscription status message',
+    examples={
+        'application/json': {'message': 'Подписка добавлена'}
+    }
+)
 
-    def post(self, request, *args, **kwargs):
+# Схема для метода GET
+get_response_schema = openapi.Response(
+    description='List of subscriptions',
+    schema=SubscriptionSerializer(many=True)
+)
+
+
+class SubscriptionAPIView(APIView):
+    def post(self, *args, **kwargs):
         user = self.request.user
-        course_id = self.request.data.get("course")
+        course_id = self.request.data.get('course')
         course_item = get_object_or_404(Course, pk=course_id)
+        # get_or_create возвращает кортеж из двух элементов:
+        # объект и bool(создан или получен из базы)
+        subs_item, created = Subscription.objects.get_or_create(user=user, course=course_item)
 
-        subscription, created = Subscription.objects.get_or_create(user=user, course=course_item)
-        if not created:
-            subscription.delete()
-            message = 'Subscription removed'
+        if created:
+            message = 'подписка добавлена'
         else:
-            message = 'Subscription added'
+            subs_item.delete()
+            message = 'подписка удалена'
 
-        return Response({"message": message})
+        return Response(message)
