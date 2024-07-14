@@ -55,3 +55,12 @@ class Payments(models.Model):
         verbose_name="Способ оплаты",
         choices=[("cash", "Cash"), ("non-cash", "Non-cash")],
     )
+    session_id = models.CharField(max_length=300, verbose_name=" id сессии", **NULLABLE)
+    link = models.URLField(max_length=400, verbose_name="Ссылка на оплату", **NULLABLE)
+
+    class Meta:
+        verbose_name = "Оплата"
+        verbose_name_plural = "Оплаты"
+
+    def __str__(self):
+        return self.payment_amount

@@ -48,21 +48,17 @@ class Lesson(models.Model):
 
 
 class Subscription(models.Model):
-    """ Модель подписки """
+    """Модель подписки"""
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        verbose_name="Пользователь"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Пользователь"
     )
     course = models.ForeignKey(
         "materials.Course",
         on_delete=models.CASCADE,
         related_name="Курс",
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def get_user_email(self):
         return self.user.email
@@ -73,4 +69,4 @@ class Subscription(models.Model):
     class Meta:
         verbose_name = "Подписка"
         verbose_name_plural = "Подписки"
-        unique_together = ('user', 'course')
+        unique_together = ("user", "course")

@@ -5,6 +5,7 @@ from config.settings import EMAIL_HOST_USER
 
 class StripeService:
     """Класс для сервиса Stripe"""
+
     def __init__(self, api_key):
         self.api_key = api_key
 
