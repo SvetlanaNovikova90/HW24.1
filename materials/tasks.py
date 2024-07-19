@@ -1,7 +1,8 @@
 from celery import shared_task
+from django.core.mail import send_mail
 
-
-from materials.model import Course
+from config import settings
+from materials.model import Course, Subscription
 from materials.services import send_mailing
 
 
@@ -9,11 +10,15 @@ from materials.services import send_mailing
 def mailing_about_updates(course_id):
     """Функция отправления сообщений об обновлении курса клиентам"""
     course = Course.objects.get(pk=course_id)
-    subscription_list = course.subscription.all()
-    user_list = [subscription.user for subscription in subscription_list]
-    subject = "Обновление"
-    body = f"Вышло обновление по курсу {course}"
-    send_mailing(user_list, subject, body)
+    subscription = Subscription.objects.get(course=course_id)
+    print("отправка")
+
+    send_mail(
+        "Обновление",
+        f"Вышло обновление по курсу {course}",
+        settings.EMAIL_HOST_USER,
+        [subscription.user.email],
+    )
 
 
 @shared_task

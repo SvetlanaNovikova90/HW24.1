@@ -16,6 +16,8 @@ setuptools          70.0.0
 sqlparse            0.5.0
 tzdata              2024.1
 wheel               0.43.0
+django-celery-beat            2.6.0
+
 
 Django~=5.0.4
 python-dotenv~=1.0.1
@@ -26,3 +28,4 @@ celery~=5.4.0
 drf_yasg
 stripe~=10.3.0
 config~=0.5.1
+pytz~=2024.1

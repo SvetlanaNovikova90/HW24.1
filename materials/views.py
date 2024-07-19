@@ -4,6 +4,8 @@ from rest_framework import viewsets, status
 
 from django.utils import timezone
 from drf_yasg import openapi
+from rest_framework.decorators import action
+
 from materials.tasks import mailing_about_updates
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -115,6 +117,7 @@ get_response_schema = openapi.Response(
 
 
 class SubscriptionAPIView(APIView):
+    @action(detail=True, authods=("post",))
     def post(self, *args, **kwargs):
         user = self.request.user
         course_id = self.request.data.get("course")
