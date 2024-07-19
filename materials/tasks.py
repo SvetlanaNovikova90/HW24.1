@@ -11,13 +11,13 @@ def mailing_about_updates(course_id):
     """Функция отправления сообщений об обновлении курса клиентам"""
     course = Course.objects.get(pk=course_id)
     subscription = Subscription.objects.get(course=course_id)
-    print("отправка")
+    # print("отправка")
 
     send_mail(
-        "Обновление",
-        f"Вышло обновление по курсу {course}",
-        settings.EMAIL_HOST_USER,
-        [subscription.user.email],
+        subject="Обновление",
+        message=f"Вышло обновление по курсу {course}",
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[subscription.user.email],
     )
 
 
